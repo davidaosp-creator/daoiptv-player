@@ -6,7 +6,7 @@
 <title>DaoIptvPlayer</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0B0D10">
-<link rel="icon" href="icon-192.png">
+<link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAFjklEQVR4nO3dQW7jNhiGYSboLhMgp8htctq5zZwiQJJ1uqmmjm1JpERJpP7n2RUoJi7wvSbtid2H1Jin55fvox8D2/r6eH84+jEMDn0gxs7gqCh2/6FGz5w9Y9jtB+UO//PtdeuHwsF+/f6T9e/tEcLmP2Bu+AbPXBBbhrDZHzw1fKNnzFQMW4RQ/Q8cG37u6HOPR/q1dgs1Q6gawL3xz/3HGjxLNlIrgip/SOmzvtEzpnQza0NYHUDJs77hk6tkQ2siWBVA7vgNn6Vy97Q0gsUBXI/f8NlSzr6WRPC45MEYP3u7t6fr3S35LYPiYubGb/hsbW5zJSdB0Qlg/LTgemdrToLsAIyfltSKICsA46dFNSKYDcD4adnaCIpeAxg/LZqLYMpkAFP1GD8tmdrj1I5HA5i6+hg/LbrcZe5VKOsK5Pf36VHObu8G4OpDr0qvQrMngKsPvZm6Cl27CeCyElcfzuByx9enQPbboJ796UnuXn8E4Nmfsxo7BbJOAM/+9Chnt38D8I1tRDLs/e4J4J0fzmLuHaFFnwiDs3hMyfWHmJ6eX75vTgDXH85m6hrkCkRoAiA0ARDa49jf/rr/cyZjrwOcAIQmAEITAKEJgNAEQGgCIDQBEJoACE0AhCYAQhMAoQmA0ARAaAIgNAEQmgAITQCEJgBCEwChCYDQBEBoAiA0ARCaAAhNAIQmAEITwEL+J4LnIIAVPt9ehdA5AVQggn4JoBKnQZ8EUJkQ+iKAjYigDwLYkNOgfQLYgRDaJYAdCaE9AjiACNohgIM4DdoggIMJ4VgCaIQIjiGAhjgN9ieABglhPwJomAi2J4DGOQ22JYBOCGEbAuiMEOoSQKdEUIcAOuY0WE8AJyCE5QRwIiIoJ4CTcRqUEcBJCSGPAE5OBNMEEIDTYJwAAhHCLQEEJIT/CSAwEQggvOingQBIKcUNQQD8EC0CAXAj0mnwz9EPgPb8+v3n6IewGwHwV6ThD1yBSCnFHH9KToDwog5/IICgog9/IIBgDP8nrwECMf5bToAADH+cAE7M8OcJ4IQMP5/XACdj/GWcACdh+MsIoHOGv44AOmX4dXgN0CHjr8cJ0BHDr08AHTD87QigYYa/Pa8BGmX8+3ACNMbw9yWARhj+MQRwMMM/ltcABzL+4zkBDmD47RDAjgy/PQLYgeG3y2uAjRl/25wAGzH8PgigMsPviwAqMfw+eQ1QgfH3ywmwguH3zwmwkPGfgwAITQCEJgBCEwChCYDQBEBoAiA0ARCaAAhNAIQmAEITAKEJgNAEQGgCIDQBEJoACE0AhCYAQhMAoQmA0ARAaAIgNAEQmgAITQCEJgBCe/z6eH8Y/uHy+y4/314PeUCwhcs9X+7cCUBoAiA0ARDaTQBeB3A2Y/f/lP4L4PKFMETx9fH+4ApEaHcDcA3iLKauPyldBOAaRCTD3rOuQE4BepSz2x8BjP2tMPTucs+XO89+EewUoCe5e70JwCnA2Yw9+6eUcQJ4R4jezL3zc+luAFPvCImAlk3t896us14DuArRo5zdjgZwXYurEK2buvqM3WomTwBXIXpRevUZFP0u0HVVIqAF1zssubLPBjB1Fbr3w2FPc+Of+xWfrBNABLRo7fhTKrgCiYCW1Bh/SoWvAURAC2qNP6WUFv0K9NPzy/fUA7r3oGCtnJ2V/lr/ok+EzZ0EKTkNqGuL8ae08AQYXJ8EKTkNqCt3T0s/0LX6U2C5EaQkBPKVbGjNpxmrfAzyXgQpCYFypZtZ+1Heqp8DLjkNBmJgyUZqfYa9+gfhS0+Da4I4v7VbqPkFDpt9E8RYCCl5h4hxU0+AW3xzyeZfhTIVQkpiYP7U3/Ire3b7LqC5EAaCOL/ca+4e31W1+5dh5YZAXHt+Sduh3wYnBgZHfTPhvzneWF8dr7LPAAAAAElFTkSuQmCC">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -963,6 +963,17 @@ audio::-webkit-media-controls-panel{background:var(--surface)}
 
   /* ============ PLAYER ============ */
   function playItem(item){
+    const isHttpUrl = /^http:\/\//i.test(item.url);
+    const isHttpsPage = location.protocol === 'https:';
+
+    // Vídeo/áudio http:// dentro de uma página https:// nunca vai tocar embutido
+    // (o navegador bloqueia por padrão, sem opção de liberar) — abre direto numa
+    // aba nova, que é onde esse link funciona de verdade.
+    if(isHttpUrl && isHttpsPage){
+      window.open(item.url, '_blank', 'noopener');
+      return;
+    }
+
     const overlay = $('#playerOverlay');
     const mediaWrap = $('#playerMedia');
     overlay.classList.remove('hidden');
@@ -972,15 +983,12 @@ audio::-webkit-media-controls-panel{background:var(--surface)}
 
     if(state.hls){ state.hls.destroy(); state.hls = null; }
 
-    const isHttpUrl = /^http:\/\//i.test(item.url);
     function showBlockedWarning(){
       if(mediaWrap.querySelector('.player-warn')) return;
       const warn = document.createElement('div');
       warn.className = 'player-warn';
-      const isHttpsPage = location.protocol === 'https:';
       if(isHttpUrl && isHttpsPage){
-        warn.innerHTML = `<strong>Este link é HTTP simples.</strong> O navegador bloqueia esse tipo de link dentro de uma página segura (HTTPS) por segurança, e o vídeo fica preto/parado — não é erro da lista.
-          <br>Duas formas de resolver: (1) abra o ícone de cadeado/informações ao lado do endereço → "Configurações do site" → "Conteúdo não seguro" → Permitir, e recarregue a página; ou (2) baixe este player e abra o arquivo direto no navegador, fora do Claude.
+        warn.innerHTML = `<strong>Este link é HTTP simples.</strong> O navegador bloqueia esse tipo de link dentro de uma página segura (HTTPS) por padrão — não é erro da lista.
           <div style="margin-top:8px"><a href="${escapeAttr(item.url)}" target="_blank" rel="noopener" class="btn" style="display:inline-flex">Abrir link em nova aba</a></div>`;
       } else {
         warn.innerHTML = `<strong>Não foi possível carregar esse link agora.</strong> Não é bloqueio de HTTP/HTTPS (isso não se aplica aqui) — pode ser link expirado, canal fora do ar no servidor da lista, ou o provedor bloqueando esse tipo de acesso.
