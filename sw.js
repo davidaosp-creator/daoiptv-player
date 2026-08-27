@@ -1,4 +1,4 @@
-const CACHE = 'daoiptv-shell-v1';
+const CACHE = 'daoiptv-shell-v2';
 const SHELL = ['./index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -13,12 +13,17 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// Só cuida do "shell" do app (HTML/ícones). Vídeo, m3u remoto e TMDB
-// seguem direto pra rede — não faz sentido cachear isso.
+// Network-first: sempre busca a versão mais nova quando há internet
+// (que é sempre, já que o player depende de internet pra tocar qualquer coisa).
+// Só cai pro cache se estiver genuinamente offline.
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if(url.origin !== location.origin) return;
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
+    fetch(e.request).then(res => {
+      const copy = res.clone();
+      caches.open(CACHE).then(c => c.put(e.request, copy));
+      return res;
+    }).catch(()=> caches.match(e.request))
   );
 });
