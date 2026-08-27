@@ -1008,7 +1008,7 @@ audio::-webkit-media-controls-panel{background:var(--surface)}
     state.seriesClusterCache = {};
     state.section = 'all'; state.activeSub=null; state.currentShow=null; state.renderCount=60;
     setStatus(`Lista carregada: ${items.length} itens.`, true);
-    saveCatalog(text.length < 4200000 ? text : null, sourceLabel);
+    saveCatalog(text, sourceLabel);
     setTimeout(closeModal, 700);
     render();
   }
@@ -1075,24 +1075,53 @@ audio::-webkit-media-controls-panel{background:var(--surface)}
   });
 
   /* ============ PERSISTENCE ============ */
-  // Usa localStorage: funciona ao abrir o arquivo direto no navegador (fora do Claude),
-  // que é onde este player deve rodar de verdade.
+  // Favoritos/config: localStorage (pequenos). Lista M3U (pode ter dezenas de MB): IndexedDB.
+  const IDB_NAME = 'daoiptv-db', IDB_STORE = 'kv';
+  function idbOpen(){
+    return new Promise((resolve, reject)=>{
+      const req = indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = ()=> req.result.createObjectStore(IDB_STORE);
+      req.onsuccess = ()=> resolve(req.result);
+      req.onerror = ()=> reject(req.error);
+    });
+  }
+  async function idbSet(key, value){
+    try{
+      const db = await idbOpen();
+      return new Promise((resolve)=>{
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).put(value, key);
+        tx.oncomplete = ()=> resolve(true);
+        tx.onerror = ()=> resolve(false);
+      });
+    }catch(e){ return false; }
+  }
+  async function idbGet(key){
+    try{
+      const db = await idbOpen();
+      return new Promise((resolve)=>{
+        const tx = db.transaction(IDB_STORE, 'readonly');
+        const req = tx.objectStore(IDB_STORE).get(key);
+        req.onsuccess = ()=> resolve(req.result);
+        req.onerror = ()=> resolve(undefined);
+      });
+    }catch(e){ return undefined; }
+  }
+
   function saveFavorites(){
     try{ localStorage.setItem('grade-favorites', JSON.stringify([...state.favorites])); }catch(e){}
   }
   function saveCatalog(rawText, sourceLabel){
-    try{
-      if(rawText) localStorage.setItem('grade-raw-m3u', rawText);
-      localStorage.setItem('grade-source-meta', JSON.stringify({label: sourceLabel||'', savedAt: Date.now()}));
-    }catch(e){ /* lista grande demais para o armazenamento do navegador — segue normal nesta sessão */ }
+    try{ localStorage.setItem('grade-source-meta', JSON.stringify({label: sourceLabel||'', savedAt: Date.now()})); }catch(e){}
+    if(rawText) idbSet('raw-m3u', rawText);
   }
-  function loadPersisted(){
+  async function loadPersisted(){
     try{
       const fav = localStorage.getItem('grade-favorites');
       if(fav) state.favorites = new Set(JSON.parse(fav));
     }catch(e){}
     try{
-      const raw = localStorage.getItem('grade-raw-m3u');
+      const raw = await idbGet('raw-m3u');
       if(raw){
         const items = parseM3U(raw);
         if(items.length){
