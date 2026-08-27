@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DãoIPTV — Painel IPTV</title>
+<title>DaoIptvPlayer</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0B0D10">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="DãoIPTV">
+<meta name="apple-mobile-web-app-title" content="DaoIptvPlayer">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"></script>
@@ -146,6 +146,42 @@ main{flex:1;min-width:0;overflow-y:auto;padding:26px 30px 60px}
 .chip.active{background:var(--accent);border-color:var(--accent);color:#12080a}
 .chip-n{opacity:.65;font-weight:500;margin-left:2px}
 .chip.active .chip-n{opacity:.8}
+
+/* ---------- LAUNCHER (tela inicial) ---------- */
+.launcher{
+  min-height:calc(100vh - 200px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:44px;
+  text-align:center;
+}
+.launcher-logo{display:flex;flex-direction:column;align-items:center;gap:10px}
+.launcher-mark{
+  width:56px;height:56px;border-radius:16px;background:var(--accent);
+  display:flex;align-items:center;justify-content:center;color:#12080a;
+  box-shadow:0 0 40px -6px var(--accent);
+}
+.launcher-title{font-family:var(--font-display);font-size:26px;font-weight:700;letter-spacing:.3px}
+.launcher-title span{color:var(--accent)}
+.launcher-grid{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;max-width:760px}
+.launcher-btn{
+  width:150px;height:150px;border-radius:20px;background:var(--bg-elevated);
+  border:1px solid var(--border);color:var(--text);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.launcher-btn:hover{
+  transform:translateY(-3px);border-color:var(--accent);
+  box-shadow:0 0 0 1px var(--accent), 0 10px 30px -8px rgba(255,90,54,.35);
+}
+.launcher-btn svg{width:34px;height:34px;stroke:var(--text)}
+.launcher-btn:hover svg{stroke:var(--accent)}
+.launcher-btn b{font-size:14px;font-weight:600}
+.launcher-btn small{font-family:var(--font-mono);font-size:11px;color:var(--text-dim)}
+.launcher-footer{display:flex;align-items:center;gap:18px;color:var(--text-dim);font-size:12.5px}
+.launcher-footer button{
+  display:flex;align-items:center;gap:6px;color:var(--text-muted);
+}
+.launcher-footer button:hover{color:var(--accent)}
+.launcher-footer button svg{width:13px;height:13px}
 
 /* ---------- GRID / CARDS ---------- */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:16px}
@@ -353,7 +389,7 @@ audio::-webkit-media-controls-panel{background:var(--surface)}
 <div id="app">
 
   <header class="topbar">
-    <div class="brand">Dão<span>IPTV</span><small>painel iptv</small></div>
+    <div class="brand">DaoIptv<span>Player</span></div>
     <div class="search-wrap">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input id="searchInput" type="text" placeholder="Buscar canal, filme ou série...">
@@ -730,18 +766,41 @@ audio::-webkit-media-controls-panel{background:var(--surface)}
   }
 
   function renderHome(){
-    let html = '';
-    ['movie','series','live','radio'].forEach(sec=>{
-      const all = Object.values(state.catalog[sec]).flat();
-      if(!all.length) return;
-      const sample = all.slice(0,10);
-      html += `<div class="section-title"><h2>${SECTION_LABEL[sec]}</h2><span class="n">${all.length}</span><button class="ver-tudo" data-goto="${sec}">ver tudo →</button></div>
-        <div class="row">${sample.map((it,i)=>cardHTML(it, i+1, sec==='live'||sec==='radio')).join('')}</div>`;
-    });
-    if(!html) html = '<p style="color:var(--text-muted)">Nenhum item encontrado nesta lista.</p>';
-    main.innerHTML = html;
-    bindCards();
-    main.querySelectorAll('[data-goto]').forEach(b=> b.onclick = ()=>{ setSection(b.dataset.goto); });
+    const cnt = sec => Object.values(state.catalog[sec]).flat().length;
+    const total = state.items.length;
+    main.innerHTML = `<div class="launcher">
+      <div class="launcher-logo">
+        <div class="launcher-mark"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+        <div class="launcher-title">DaoIptv<span>Player</span></div>
+      </div>
+      <div class="launcher-grid">
+        <button class="launcher-btn" data-goto="live">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M8 7l4-4 4 4M2 20h20"/></svg>
+          <b>TV ao vivo</b><small>${cnt('live')} canais</small>
+        </button>
+        <button class="launcher-btn" data-goto="movie">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/></svg>
+          <b>Filmes</b><small>${cnt('movie')} títulos</small>
+        </button>
+        <button class="launcher-btn" data-goto="series">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="13" rx="2"/><path d="M8 21h8M12 18v3"/></svg>
+          <b>Séries</b><small>${cnt('series')} episódios</small>
+        </button>
+        <button class="launcher-btn" id="launcherConfigBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009.1 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9.1a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          <b>Configurações</b><small>listas · capas</small>
+        </button>
+      </div>
+      <div class="launcher-footer">
+        <span>${total} itens carregados</span>
+        <button id="launcherReloadBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>Recarregar</button>
+        <button id="launcherFavBtn">★ Favoritos (${state.favorites.size})</button>
+      </div>
+    </div>`;
+    $('#launcherConfigBtn').onclick = openModal;
+    $('#launcherReloadBtn').onclick = ()=> location.reload();
+    $('#launcherFavBtn').onclick = ()=> setSection('fav');
+    main.querySelectorAll('[data-goto]').forEach(b=> b.onclick = ()=> setSection(b.dataset.goto));
   }
 
   function renderSection(sec){
