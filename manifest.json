@@ -1,6 +1,6 @@
 {
-  "name": "DãoIPTV Player",
-  "short_name": "DãoIPTV",
+  "name": "DaoIptvPlayer",
+  "short_name": "DaoIptvPlayer",
   "description": "Player de IPTV pessoal — filmes, séries, canais e rádio.",
   "start_url": "./index.html",
   "scope": "./",
